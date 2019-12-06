@@ -75,7 +75,7 @@
 
 (defn puzzle-2b
   {:test (fn []
-           (is= (puzzle-2b) 6577)
+           (is= (time (puzzle-2b)) 6577)
            )}
   []
   (let [input (get-input)]

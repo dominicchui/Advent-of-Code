@@ -65,6 +65,32 @@
            (is= (run-program [1002, 4, 3, 4, 33]) [1002, 4, 3, 4, 99])
            (is= (run-program [3, 0, 99] 1) [1, 0, 99])
            (is= (run-program [3, 0, 4, 0, 99] 5) [5 0 4 0 99])
+           (is= (run-program [3, 9, 8, 9, 10, 9, 4, 9, 99, -1, 8] 7) [3, 9, 8, 9, 10, 9, 4, 9, 99, 0, 8])
+           (is= (run-program [3, 9, 8, 9, 10, 9, 4, 9, 99, -1, 8] 8) [3, 9, 8, 9, 10, 9, 4, 9, 99, 1, 8])
+           (is= (run-program [3, 9, 7, 9, 10, 9, 4, 9, 99, -1, 8] 3) [3, 9, 7, 9, 10, 9, 4, 9, 99, 1, 8])
+           (is= (run-program [3, 9, 7, 9, 10, 9, 4, 9, 99, -1, 8] 100) [3, 9, 7, 9, 10, 9, 4, 9, 99, 0, 8])
+           (is= (run-program [3, 3, 1108, -1, 8, 3, 4, 3, 99] 13) [3, 3, 1108, 0, 8, 3, 4, 3, 99])
+           (is= (run-program [3, 3, 1108, -1, 8, 3, 4, 3, 99] 8) [3, 3, 1108, 1, 8, 3, 4, 3, 99])
+           (is= (run-program [3, 3, 1107, -1, 8, 3, 4, 3, 99] 8) [3, 3, 1107, 0, 8, 3, 4, 3, 99])
+           (is= (run-program [3, 3, 1107, -1, 8, 3, 4, 3, 99] -1) [3, 3, 1107, 1, 8, 3, 4, 3, 99])
+           (is= (run-program [3, 21, 1008, 21, 8, 20, 1005, 20, 22, 107, 8, 21, 20, 1006, 20, 31,
+                              1106, 0, 36, 98, 0, 0, 1002, 21, 125, 20, 4, 20, 1105, 1, 46, 104,
+                              999, 1105, 1, 46, 1101, 1000, 1, 20, 4, 20, 1105, 1, 46, 98, 99] 3)
+                [3, 21, 1008, 21, 8, 20, 1005, 20, 22, 107, 8, 21, 20, 1006, 20, 31,
+                 1106, 0, 36, 98, 0, 3, 1002, 21, 125, 20, 4, 20, 1105, 1, 46, 104,
+                 999, 1105, 1, 46, 1101, 1000, 1, 20, 4, 20, 1105, 1, 46, 98, 99])
+           (is= (run-program [3, 21, 1008, 21, 8, 20, 1005, 20, 22, 107, 8, 21, 20, 1006, 20, 31,
+                              1106, 0, 36, 98, 0, 0, 1002, 21, 125, 20, 4, 20, 1105, 1, 46, 104,
+                              999, 1105, 1, 46, 1101, 1000, 1, 20, 4, 20, 1105, 1, 46, 98, 99] 8)
+                [3, 21, 1008, 21, 8, 20, 1005, 20, 22, 107, 8, 21, 20, 1006, 20, 31,
+                 1106, 0, 36, 98, 1000, 8, 1002, 21, 125, 20, 4, 20, 1105, 1, 46, 104,
+                 999, 1105, 1, 46, 1101, 1000, 1, 20, 4, 20, 1105, 1, 46, 98, 99])
+           (is= (run-program [3, 21, 1008, 21, 8, 20, 1005, 20, 22, 107, 8, 21, 20, 1006, 20, 31,
+                              1106, 0, 36, 98, 0, 0, 1002, 21, 125, 20, 4, 20, 1105, 1, 46, 104,
+                              999, 1105, 1, 46, 1101, 1000, 1, 20, 4, 20, 1105, 1, 46, 98, 99] 10)
+                [3, 21, 1008, 21, 8, 20, 1005, 20, 22, 107, 8, 21, 20, 1006, 20, 31,
+                 1106, 0, 36, 98, 1001, 10, 1002, 21, 125, 20, 4, 20, 1105, 1, 46, 104,
+                 999, 1105, 1, 46, 1101, 1000, 1, 20, 4, 20, 1105, 1, 46, 98, 99])
            )}
   ([program & input]
    (loop [program program
@@ -72,7 +98,7 @@
      (let [instruction (nth program pointer)
            num-digits (count-digits instruction)
            opcode (if (> num-digits 1)
-                    (read-string (subs (str instruction) (- (count-digits instruction) 2)))
+                    (Integer/parseInt (subs (str instruction) (- (count-digits instruction) 2)))
                     instruction)]
        ;(println "opcode " opcode)
        (if (= instruction 99)
@@ -95,13 +121,45 @@
                       (do
                         (println (interpret-addressing-mode program pointer 1))
                         program)
+                      (= opcode 5)
+                      ;jump-if: if param 1 is non-zero, jump to value given by param 2
+                      program
+                      (= opcode 6)
+                      ;jump-if-not: if param 1 is zero, jump to value given by param 2
+                      program
+                      (= opcode 7)
+                      ;less than: if param 1 < param 2, store '1' in position given by param 3, otherwise 0
+                      (assoc program (get-at-index program pointer 3)
+                                     (if (< (interpret-addressing-mode program pointer 1)
+                                            (interpret-addressing-mode program pointer 2))
+                                       1
+                                       0))
+                      (= opcode 8)
+                      ;equals: if param 1 = param 2, store '1' in position given by param 3, otherwise 0
+                      (assoc program (get-at-index program pointer 3)
+                                     (if (= (interpret-addressing-mode program pointer 1)
+                                            (interpret-addressing-mode program pointer 2))
+                                       1
+                                       0))
                       :else (error "invalid opcode " opcode))
                 (cond (or (= opcode 1)
                           (= opcode 2))
                       (+ pointer 4)
                       (or (= opcode 3)
                           (= opcode 4))
-                      (+ pointer 2))))))))
+                      (+ pointer 2)
+                      (= opcode 5)
+                      (if (not= (interpret-addressing-mode program pointer 1) 0)
+                        (interpret-addressing-mode program pointer 2)
+                        (+ pointer 3))
+                      (= opcode 6)
+                      (if (= (interpret-addressing-mode program pointer 1) 0)
+                        (interpret-addressing-mode program pointer 2)
+                        (+ pointer 3))
+                      (or (= opcode 7)
+                          (= opcode 8))
+                      (+ pointer 4)
+                      :else (error "invalid instruction-pointer offset"))))))))
 
 (defn puzzle-5a
   {:test (fn []
@@ -136,7 +194,12 @@
                              224 629 1001 223 1 223 1108 677 677 224 102 2 223 223 1006 224 644 101 1 223 223 1108
                              226 677 224 1002 223 2 223 1005 224 659 1001 223 1 223 1107 226 226 224 102 2 223 223
                              1006 224 674 1001 223 1 223 4 223 99 226])
+           ;answer is 16434972
            )}
   []
   (run-program (get-input) 1))
 
+(defn puzzle-5b
+  ;answer is 16694270
+  []
+  (run-program (get-input) 5))

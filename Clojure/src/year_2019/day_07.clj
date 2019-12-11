@@ -50,8 +50,6 @@
         mode (if (> (count-digits instruction) (+ 1 offset))
                (nth (reverse (digit instruction)) (+ 1 offset))
                0)]
-    ;(println "instruction " instruction)
-    ;(println "mode " mode)
     (cond (or (= mode 0) (nil? mode))
           (get-at-index program (get-at-index program instruction-pointer offset))
           (= mode 1)
@@ -98,14 +96,10 @@
           opcode (if (> num-digits 1)
                    (Integer/parseInt (subs (str current-instruction) (- (count-digits current-instruction) 2)))
                    current-instruction)]
-      ;(println "opcode " opcode)
-      ;(println "instructions " instructions)
-      ;(println "pointer " pointer)
       (cond (= current-instruction 99)
             [instructions -1 [] (conj (vec outputs) "done")]
             (and (= opcode 3) (empty? inputs))              ;waiting for more input
-            (do (println "waiting...")
-                [instructions pointer inputs outputs])
+            [instructions pointer inputs outputs]
             :else (recur (cond (= opcode 1)
                                ;adds param 1 to param 2 and places it at location indicated by param 3
                                [(assoc instructions (get-at-index instructions pointer 3)
@@ -228,35 +222,22 @@
          amp-four (run-amplifier instructions [(nth phases 4) (first (last amp-three))])]
     (if (= (last (last amp-four)) "done")
       (first (last amp-four))
-      (do
-        ;(println "loop!")
-        ;(println amp-zero)
-        ;(println amp-one)
-        ;(println amp-two)
-        ;(println amp-three)
-        ;(println amp-four)
-        (let [amp-zero (run-amplifier (nth amp-zero 0) (nth amp-zero 1) (nth amp-four 3) (drop 1 (last amp-zero))) ;continue running with instructions, pointer, input, output
-              amp-one (run-amplifier (nth amp-one 0) (nth amp-one 1) (nth amp-zero 3) (drop 1 (last amp-one)))
-              amp-two (run-amplifier (nth amp-two 0) (nth amp-two 1) (nth amp-one 3) (drop 1 (last amp-two)))
-              amp-three (run-amplifier (nth amp-three 0) (nth amp-three 1) (nth amp-two 3) (drop 1 (last amp-three)))
-              amp-four (run-amplifier (nth amp-four 0) (nth amp-four 1) (nth amp-three 3) (drop 1 (last amp-four)))]
-          (do
-            ;(println amp-zero)
-            ;(println amp-one)
-            ;(println amp-two)
-            ;(println amp-three)
-            ;(println amp-four)
-            (println (last (last amp-four)))
-            (recur amp-zero amp-one amp-two amp-three amp-four)))))))
+
+      (let [amp-zero (run-amplifier (nth amp-zero 0) (nth amp-zero 1) (nth amp-four 3) (drop 1 (last amp-zero))) ;continue running with instructions, pointer, input, output
+            amp-one (run-amplifier (nth amp-one 0) (nth amp-one 1) (nth amp-zero 3) (drop 1 (last amp-one)))
+            amp-two (run-amplifier (nth amp-two 0) (nth amp-two 1) (nth amp-one 3) (drop 1 (last amp-two)))
+            amp-three (run-amplifier (nth amp-three 0) (nth amp-three 1) (nth amp-two 3) (drop 1 (last amp-three)))
+            amp-four (run-amplifier (nth amp-four 0) (nth amp-four 1) (nth amp-three 3) (drop 1 (last amp-four)))]
+        (recur amp-zero amp-one amp-two amp-three amp-four)))))
 
 
 (defn find-max-feedback-thruster-signal
   {:test (fn []
            (is= (find-max-feedback-thruster-signal [3, 26, 1001, 26, -4, 26, 3, 27, 1002, 27, 2, 27, 1, 27, 26,
                                                     27, 4, 27, 1001, 28, -1, 28, 1005, 28, 6, 99, 0, 0, 5]) [[9 8 7 6 5] 139629729])
-           (is= (find-max-feedback-thruster-signal[3, 52, 1001, 52, -5, 52, 3, 53, 1, 52, 56, 54, 1007, 54, 5, 55, 1005, 55, 26, 1001, 54,
-                                                   -5, 54, 1105, 1, 12, 1, 53, 54, 53, 1008, 54, 0, 55, 1001, 55, 1, 55, 2, 53, 55, 53, 4,
-                                                   53, 1001, 56, -1, 56, 1005, 56, 6, 99, 0, 0, 0, 0, 10]) [[9 7 8 5 6] 18216])
+           (is= (find-max-feedback-thruster-signal [3, 52, 1001, 52, -5, 52, 3, 53, 1, 52, 56, 54, 1007, 54, 5, 55, 1005, 55, 26, 1001, 54,
+                                                    -5, 54, 1105, 1, 12, 1, 53, 54, 53, 1008, 54, 0, 55, 1001, 55, 1, 55, 2, 53, 55, 53, 4,
+                                                    53, 1001, 56, -1, 56, 1005, 56, 6, 99, 0, 0, 0, 0, 10]) [[9 7 8 5 6] 18216])
            )}
   [instruction]
   (let [permutations (clojure.math.combinatorics/permutations [5 6 7 8 9])
